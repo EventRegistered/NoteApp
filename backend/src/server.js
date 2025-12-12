@@ -11,9 +11,8 @@ const PORT = process.env.PORT || 4000;
     // Ensure models are synced in production cautiously; prefer migrations in real-world
     await sequelize.sync();
 
-    const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
-    const server = app.listen(PORT, host, () => {
-      console.log(`Server running on ${host}:${PORT}`);
+    const server = app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
     });
 
     process.on('unhandledRejection', (err) => {
