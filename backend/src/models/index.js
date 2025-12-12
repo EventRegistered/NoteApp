@@ -1,10 +1,14 @@
 const sequelize = require('../config/db');
 const User = require('./User');
 const Note = require('./Note');
+const RefreshToken = require('./RefreshToken');
 
 // Associations
 User.hasMany(Note, { foreignKey: 'UserId', onDelete: 'CASCADE' });
 Note.belongsTo(User, { foreignKey: 'UserId' });
+
+User.hasMany(RefreshToken, { foreignKey: 'UserId', onDelete: 'CASCADE' });
+RefreshToken.belongsTo(User, { foreignKey: 'UserId' });
 
 async function syncModels() {
   try {
@@ -23,4 +27,4 @@ if (require.main === module) {
   syncModels();
 }
 
-module.exports = { sequelize, User, Note };
+module.exports = { sequelize, User, Note, RefreshToken };
