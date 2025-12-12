@@ -7,13 +7,7 @@ import RegisterPage from './pages/RegisterPage'
 import Dashboard from './pages/Dashboard'
 import NoteEditor from './pages/NoteEditor'
 import Header from './components/Header'
-
-function Protected({ children }) {
-  const { user, loading } = useAuth()
-  if (loading) return <div className="p-6">Loading...</div>
-  if (!user) return <Navigate to="/login" replace />
-  return children
-}
+import Protected from './components/Protected'
 
 export default function App() {
   return (
@@ -26,14 +20,7 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
 
-            <Route
-              path="/app"
-              element={
-                <Protected>
-                  <Dashboard />
-                </Protected>
-              }
-            />
+            <Route path="/app" element={<Protected><Dashboard /></Protected>} />
 
             <Route
               path="/app/note/:id"

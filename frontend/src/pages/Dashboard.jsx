@@ -1,18 +1,32 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Link } from 'react-router-dom'
 import { useNotes, useCreateNote, useDeleteNote } from '../hooks/useNotes'
 import NoteCard from '../components/NoteCard'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function Dashboard() {
-  const { data, isLoading } = useNotes(1, '')
+  // call useNotes with no positional args (v5 object-signature hooks handle config inside)
+  const { data, isLoading } = useNotes()
   const create = useCreateNote()
   const del = useDeleteNote()
   const { user } = useAuth()
 
   const createSample = async () => {
-    await create.mutateAsync({ title: 'New note', content: 'Quick note' })
+    // API expects { title, body }
+    await create.mutateAsync({ title: 'New note', body: 'Quick note' })
   }
+
+  // normalize incoming note objects to guarantee a stable `id` and `body`
+  const raw = data?.data ?? []
+  const notes = raw.map((n, idx) => {
+    const id = n?.id ?? n?.NoteId ?? n?.noteId ?? n?.noteID ?? String(idx)
+    return {
+      ...n,
+      id,
+      title: n?.title ?? n?.Title ?? '',
+      body: n?.body ?? n?.Body ?? n?.Content ?? '',
+    }
+  })
 
   return (
     <div>
@@ -28,8 +42,12 @@ export default function Dashboard() {
         <div>Loading...</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {data?.data?.length ? data.data.map(n => (
-            <NoteCard key={n.NoteId} note={n} onDelete={() => del.mutate(n.NoteId)} />
+          {notes.length ? notes.map((n) => (
+            <NoteCard
+              key={n.id}
+              note={n}
+              onDelete={() => del.mutate(n.id)}
+            />
           )) : (
             <div className="p-6 bg-white rounded shadow">No notes yet</div>
           )}

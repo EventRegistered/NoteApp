@@ -5,21 +5,37 @@ const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const xss = require('xss-clean');
 const morgan = require('morgan');
-const routes = require('./routes');
+const routesFactory = require('./routes');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 
-const app = express();
-app.use(helmet());
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
-app.use(express.json({ limit: '10kb' }));
-app.use(xss());
-if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
+/**
+ * Create and configure the Express application.
+ * No side-effects on import; accepts injected dependencies for testability.
+ * @param {Object} deps
+ * @param {import('sequelize').Sequelize} deps.db
+ * @param {Object} deps.config
+ * @returns {import('express').Express}
+ */
+module.exports = function createApp({ db, config } = {}) {
+  const app = express();
 
-const limiter = rateLimit({ windowMs: 1 * 60 * 1000, max: 120, message: { message: 'Too many requests' } });
-app.use(limiter);
+  // logging middleware (dev)
+  app.use(morgan('dev'));
 
-app.use('/api', routes);
-app.use(notFound);
-app.use(errorHandler);
+  app.use(helmet());
+  app.use(cors({ origin: process.env.CORS_ORIGIN || config?.corsOrigin || '*' }));
+  app.use(express.json());
+  app.use(xss());
+  app.use(rateLimit({ windowMs: 60 * 1000, max: 200 }));
 
-module.exports = app;
+  // support routes being either a router or a factory that accepts deps
+  app.use('/api', routesFactory({ db, config }));
+
+  // health endpoint (already present)
+  app.get('/health', (req, res) => res.json({ ok: true, env: process.env.NODE_ENV }));
+
+  app.use(notFound);
+  app.use(errorHandler);
+
+  return app;
+};

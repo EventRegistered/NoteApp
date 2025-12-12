@@ -1,9 +1,12 @@
-exports.notFound = (req, res, next) => {
-  res.status(404).json({ message: `Not Found - ${req.originalUrl}` });
+module.exports.notFound = (req, res, next) => {
+  res.status(404).json({ message: 'Not Found' });
 };
 
-exports.errorHandler = (err, req, res, next) => {
+// eslint-disable-next-line no-unused-vars
+module.exports.errorHandler = (err, req, res, next) => {
+  // log server-side error details (do not leak stack in production)
   console.error(err);
-  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
-  res.status(statusCode).json({ message: err.message, stack: process.env.NODE_ENV === 'production' ? undefined : err.stack });
+  const status = err.status || 500;
+  const message = err.message || 'Internal Server Error';
+  res.status(status).json({ message });
 };
